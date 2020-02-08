@@ -2,7 +2,7 @@ defmodule Ep2Logica do
   @type cadeia :: String.t()
   @type gramatica :: %{
           cadeia_inicial: cadeia,
-          regras: [(cadeia -> cadeia), ...]
+          regras: [[cadeia, cadeia], ...]
         }
 
   @doc """
@@ -17,7 +17,6 @@ defmodule Ep2Logica do
   # Gera todas as cadeias a partir das regras da cadeia limitando-se a cadeias com tamanho <= ao tamanho da cadeia alvo (tamanho_maximo)
   defp gerar_cadeias(cadeia_alvo, tamanho_maximo, regras, conjunto_atual, conjuntos) do
     novo_conjunto = gerar_novo_conjunto(conjunto_atual, regras, tamanho_maximo)
-    tamanho_atual = obter_tamanho_maior_cadeia(conjunto_atual)
 
     # Debug
     # IO.inspect conjunto_atual, label: "conjunto_atual"
@@ -48,10 +47,6 @@ defmodule Ep2Logica do
     |> Enum.filter(fn x -> String.length(x) <= tamanho_maximo end)
   end
 
-  defp reduzir_cadeias([], _) do
-    []
-  end
-
   # Gera um novo conjunto a partir de um conjunto de cadeias aplicando-se as regras, limitado ao tamanho
   defp gerar_novo_conjunto(conjunto, regras, tamanho_maximo) do
     novo_conjunto =
@@ -60,16 +55,6 @@ defmodule Ep2Logica do
       end
 
     reduzir_cadeias(novo_conjunto, tamanho_maximo)
-  end
-
-  defp obter_tamanho_maior_cadeia(cadeias) do
-    cadeias
-    |> Enum.map(fn x -> String.length(x) end)
-    |> Enum.max()
-  end
-
-  defp obter_tamanho_maior_cadeia([]) do
-    0
   end
 
   # Aplica todas as regras a uma determinada cadeia
