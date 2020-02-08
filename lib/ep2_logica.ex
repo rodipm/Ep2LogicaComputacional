@@ -1,65 +1,78 @@
 defmodule Ep2Logica do
+  @type cadeia :: String.t()
+  @type gramatica :: %{
+          cadeia_inicial: cadeia,
+          regras: [(cadeia -> cadeia), ...]
+        }
 
-  def reconhecer_cadeia(cadeia, gramatica)
+  @doc """
+  Recebe uma `cadeia` e verifica se pertence à `gramática`.
+  """
+  @spec reconhecer_cadeia(cadeia, gramatica) :: true | false
+
   def reconhecer_cadeia(cadeia, %{"cadeia_inicial" => cadeia_inicial, "regras" => regras}) do
     gerar_cadeias(cadeia, String.length(cadeia), regras, [cadeia_inicial], [cadeia_inicial])
   end
 
-  def gerar_cadeias(cadeia_alvo, tamanho_maximo, regras, conjunto_atual, conjuntos) do
-    novo_conjunto = percorrer_conjunto(conjunto_atual, regras)
+  # Gera todas as cadeias a partir das regras da cadeia limitando-se a cadeias com tamanho <= ao tamanho da cadeia alvo (tamanho_maximo)
+  defp gerar_cadeias(cadeia_alvo, tamanho_maximo, regras, conjunto_atual, conjuntos) do
+    novo_conjunto = gerar_novo_conjunto(conjunto_atual, regras, tamanho_maximo)
     tamanho_atual = obter_tamanho_maior_cadeia(conjunto_atual)
 
     # Debug
-    IO.inspect(conjuntos, label: "conjuntos")
-    IO.inspect(conjunto_atual, label: "conjunto_atual")
-    IO.inspect(novo_conjunto, label: "novo_conjunto")
-    IO.inspect(tamanho_atual, label: "tamanho_atual")
-  
+    # IO.inspect conjunto_atual, label: "conjunto_atual"
+    # IO.inspect novo_conjunto, label: "novo_conjunto"
+    # IO.inspect tamanho_atual, label: "tamanho_atual"
+
     # Verificações de parada
     cond do
-      conjunto_atual ++ novo_conjunto == conjunto_atual or tamanho_atual == tamanho_maximo ->
-        IO.inspect conjuntos ++ [novo_conjunto]
+      conjunto_atual ++ novo_conjunto == conjunto_atual ->
         if Enum.member?(conjunto_atual ++ novo_conjunto, cadeia_alvo), do: true, else: false
+
       true ->
-        gerar_cadeias(cadeia_alvo, tamanho_maximo, regras, novo_conjunto, conjuntos ++ [novo_conjunto])
+        gerar_cadeias(
+          cadeia_alvo,
+          tamanho_maximo,
+          regras,
+          novo_conjunto,
+          conjuntos ++ [novo_conjunto]
+        )
+    end
+  end
+
+  # Gera uma lista de cadeias a partir de uma lista de listas de cadeias
+  defp reduzir_cadeias(novo_conjunto, tamanho_maximo) do
+    novo_conjunto
+    |> Enum.reduce(fn x, acc -> x ++ acc end)
+    |> Enum.filter(fn x -> x != nil end)
+    |> Enum.filter(fn x -> String.length(x) <= tamanho_maximo end)
+  end
+
+  defp reduzir_cadeias([], _) do
+    []
+  end
+
+  # Gera um novo conjunto a partir de um conjunto de cadeias aplicando-se as regras, limitado ao tamanho
+  defp gerar_novo_conjunto(conjunto, regras, tamanho_maximo) do
+    novo_conjunto =
+      for cadeia <- conjunto do
+        aplicar_regras_a_cadeia(cadeia, regras)
       end
+
+    reduzir_cadeias(novo_conjunto, tamanho_maximo)
+  end
+
+  defp obter_tamanho_maior_cadeia(cadeias) do
+    cadeias
+    |> Enum.map(fn x -> String.length(x) end)
+    |> Enum.max()
   end
 
   defp obter_tamanho_maior_cadeia([]) do
     0
   end
 
-  defp obter_tamanho_maior_cadeia(cadeias) do
-    cadeias
-    |> Enum.map(fn(x) -> String.length(x) end)
-    |> Enum.max
-    |> IO.inspect
-  end
-
-  defp percorrer_conjunto(conjunto, regras) do
-    novo_conjunto = for cadeia <- conjunto do
-      aplicar_regras_a_cadeia(cadeia, regras)
-    end
-    
-    reduzir_cadeias(novo_conjunto)
-  end
-
-  defp reduzir_cadeias([]) do
-    []
-  end
-
-  defp reduzir_cadeias(novo_conjunto) do
-    novo_conjunto
-    |> Enum.reduce(fn(x, acc) -> x ++ acc end)
-    |> Enum.filter(fn x -> x != nil end)
-  end
-
-  # defp aplicar_regras_a_cadeia(cadeia, regras) do
-  #   for regra <- regras do
-  #     regra.(cadeia)
-  #   end
-  # end
-
+  # Aplica todas as regras a uma determinada cadeia
   defp aplicar_regras_a_cadeia(cadeia, regras) do
     for [x, y] <- regras do
       if String.contains?(cadeia, x) do
@@ -70,11 +83,3 @@ defmodule Ep2Logica do
     end
   end
 end
-
-# Regras da Gramatica:
-gramatica = %{
-  "cadeia_inicial" => "S",
-  "regras" => [["S", "aA"], ["A", "b"], ["A", "Sb"]]
-}
-
-IO.inspect(Ep2Logica.reconhecer_cadeia("aaaaaabbbbbb", gramatica))
