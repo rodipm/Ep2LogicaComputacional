@@ -1,14 +1,12 @@
 defmodule Ep2Logica do
   @type cadeia :: String.t()
-  @type gramatica :: %{
-          cadeia_inicial: cadeia,
-          regras: [[cadeia, cadeia], ...]
-        }
+  @type regra :: [cadeia, ...]
+  @type gramatica :: %{:cadeia_inicial => cadeia, :regras => [regra, ...]}
 
   @doc """
   Recebe uma `cadeia` e verifica se pertence à `gramática`.
   """
-  @spec reconhecer_cadeia(cadeia, gramatica) :: true | false
+  @spec reconhecer_cadeia(cadeia, map) :: true | false
 
   def reconhecer_cadeia(cadeia, %{"cadeia_inicial" => cadeia_inicial, "regras" => regras}) do
     gerar_cadeias(cadeia, String.length(cadeia), regras, [cadeia_inicial], [cadeia_inicial])
